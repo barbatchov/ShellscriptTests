@@ -4,109 +4,174 @@ setup=$(dialog \
   --title 'Setup' \
   --inputbox 'Se voce tem usuario ssh, digite: [padrao]' \
   0 0)
-
+  
+##
+# File_GetSize counts the size of a file or directory
+#
+# @param file Is the input file or directory
+#
 File_GetSize()
 {
   if [[ -f $1 ]] || [[ -d $1 ]]
   then
+  
     du -c $1 | egrep total | sed 's/total//g' | egrep -o '[0-9]*'
+    
+  else
+  
+    echo 0
+    
   fi
 }
 
+##
+# Dialog_Gauge opens a gauge
+#
+# @param cpid       Is the pid
+# @param title      Is the title
+# @param content    Is the gauge content
+# @param count_expr Is a command to execute
+# @param total      Is the total
+#
+Dialog_Gauge()
+{
+  cpid=$1
+  title=$2
+  content=$3
+  count_expr=$4
+  total=$5
+  
+  if [[ $cpid == "" ]] || [[ $count_expr == "" ]] || [[ $total == "" ]]
+  then
+  
+    dialog --msgbox 'Nothing to do without a cpid, count_expr or total.' 8 40
+  
+  else    
+  
+    trap "kill $cpid" 2 15
+    (
+      while kill -0 $cpid &>/dev/null
+      do
+        count=$(eval $count_expr)
+        echo $((count*100/total))
+        sleep 0.1
+      done
+      
+      echo 100
+    )  | dialog --title $title --gauge $content 8 40 0
+    
+  fi
+}
+
+
+##
+# Dialog_CopyTo copies files with force mode to another place
+#
+# @param sourceFile      Is the source file or directory
+# @param destinationfile Is the destination file or directory
+#
 Dialog_CopyTo()
 {
   if [[ -d $1 ]] && [[ -d $2 ]]
   then
+  
     total=$(File_GetSize $1)
-    cp -r $1 $2
+    cp -rf $1 $2 &
     cpid=$!
-    trap "kill $cpid" 2 15
+    title="Coping..."
+    content="Coping $1 to $2"
+    count_expr="File_GetSize $2"
+
+    Dialog_Gauge $cpid $title $content $count_expr $total
     
-    (
-      while running $cpid; do
-        copied=$(File_GetSize $1)
-        percentage=$((copied*100/total))
-        echo $percentage
-        sleep 1
-      done
-      
-      echo 100
-    ) | dialog --title='Coping...' --gauge "Coping $1 to $2" 8 40 0
   else
+  
     dialog --msgbox  'Nothing to copy' 8 40
+    
   fi
 }
 
+##
+# Dialog_MoveTo moves files with force mode to another place
+#
+# @param sourceFile      Is the source file or directory
+# @param destinationfile Is the destination file or directory
+#
 Dialog_MoveTo()
 {
   if [[ -d $1 ]] && [[ -d $2 ]]
   then
+  
     total=$(File_GetSize $1)
-    mv -r $1 $2
+    mv -rf $1 $2 &
     cpid=$!
-    trap "kill $cpid" 2 15
+    title="Moving..."
+    content="Moving $1 to $2"
+    count_expr="File_GetSize $2"
+
+    Dialog_Gauge $cpid $title $content $count_expr $total
     
-    (
-      while running $cpid; do
-        copied=$(File_GetSize $1)
-        percentage=$((copied*100/total))
-        echo $percentage
-        sleep 1
-      done
-      
-      echo 100
-    ) | dialog --title='Moving...' --gauge "Coping $1 to $2" 8 40 0
   else
+  
     dialog --msgbox  'Nothing to move' 8 40
+    
   fi
 }
 
+##
+# Dialog_CompactTo compacts files on tar.gz
+#
+# @param sourceFile      Is the source file or directory
+# @param destinationfile Is the destination file or directory
+#
 Dialog_CompactTo()
 {
   if [[ -f $1 ]] || [[ -d $1 ]] && [[ $2 != "" ]]
   then
+  
     total=$(File_GetSize $1)
     file="$2.tar.gz"
     tar czvf $file $1
     cpid=$!
-    trap "kill $cpid" 2 15
+    title="Compacting..."
+    content="Compacting $1 to $file"
+    count_expr="File_GetSize $file"
+
+    Dialog_Gauge $cpid $title $content $count_expr $total
     
-    (
-      while running $cpid; do
-        copied=$(File_GetSize $file)
-        percentage=$((copied*100/total))
-        echo $percentage
-        sleep 1
-      done
-      
-      echo 100
-    ) | dialog --title='Compacting...' --gauge "Compacting $1 to $file" 8 40 0
   else
+  
     dialog --msgbox  'Nothing to compact' 8 40
+    
   fi
 }
 
+##
+# Dialog_ConvertToBase64 converts files on base64
+#
+# @param sourceFile      Is the source file or directory
+# @param destinationfile Is the destination file or directory
+#
 Dialog_ConvertToBase64()
 {
   if [[ -f $1 ]] || [[ -d $1 ]] && [[ $2 != "" ]]
   then
+  
     total=$(File_GetSize $1)
     file="$2.base64"
     base64 $1 > $file
     cpid=$!
-    trap "kill $cpid" 2 15
+    title="Converting..."
+    content="Converting base64 $1 to $file"
+    count_expr="File_GetSize $file"
+
+    Dialog_Gauge $cpid $title $content $count_expr $total
     
-    (
-      while running $cpid; do
-        copied=$(File_GetSize $file)
-        percentage=$((copied*100/total))
-        echo $percentage
-        sleep 1
-      done
-      
-      echo 100
-    ) | dialog --title='Converting...' --gauge "Converting base64 $1 to $file" 8 40 0
   else
+  
     dialog --msgbox 'Nothing to convert' 8 40
+    
   fi
 }
+
+
