@@ -1,9 +1,9 @@
 #!/bin/bash
-setup=$(dialog \
-  --stdout \
-  --title 'Setup' \
-  --inputbox 'Se voce tem usuario ssh, digite: [padrao]' \
-  0 0)
+#setup=$(dialog \
+#  --stdout \
+#  --title 'Setup' \
+#  --inputbox 'Se voce tem usuario ssh, digite: [padrao]' \
+#  0 0)
   
 ##
 # File_GetSize counts the size of a file or directory
@@ -22,6 +22,52 @@ File_GetSize()
     echo 0
     
   fi
+}
+
+##
+# File_GetLines echoes the number of lines of a file
+#
+# @param file Is the input file
+#
+File_GetLines()
+{
+
+  if ! [ -f $1 ]
+  then
+    Dialog_Alert "Could not count from inexistent file"
+    exit 1
+  fi
+
+  echo $(wc -l $1 | grep -o "[[:digit:]][[:digit:]]*" 2>/dev/null)
+}
+
+##
+# String_GetLines echoes the number of lines of a string
+#
+# @param string Is the input string
+#
+String_GetLines()
+{
+  echo $(echo $1 | sed -n '$=' 2>/dev/null)
+}
+
+##
+# Dialog_Alert pops an alert with string or file contents
+# 
+# @param content Can be string or file
+#
+Dialog_Alert()
+{
+  [[ $1 == "" ]] && exit 1
+
+  content=$1
+  lines=$(String_GetLines $1)
+
+  [ -f $content ] && content="$(cat $content)" && lines=$(File_GetLines $conent)
+
+  total=$(( $lines + 10 ))
+  
+  dialog --msgbox $1 $total 80
 }
 
 ##
@@ -174,4 +220,25 @@ Dialog_ConvertToBase64()
   fi
 }
 
+Dialog_GitCloneTo()
+{
+  repo=$1
+  cloneTo=$2
+  title="Cloning..."
+
+  if [[ $(echo $repo | grep ".git$" 2>/dev/null) ]] && [[ $cloneTo != "" ]]
+  then
+    git clone $repo > /tmp/dialog-gitcloneto.log&
+    cpid=$!
+    content=$(tail -f /tmp/dialog-gitcloneto.log)
+    count_expr="0"
+    total="100"
+
+    Dialog_Gauge $cpid $title $content $count_expr $total
+  else
+  
+    dialog --msgbox 'Nothing to clone' 8 40
+    
+  fi
+}
 
