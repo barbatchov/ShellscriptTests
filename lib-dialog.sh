@@ -31,10 +31,9 @@ File_GetSize()
 #
 File_GetLines()
 {
-
   if ! [ -f $1 ]
   then
-    Dialog_Alert "Could not count from inexistent file"
+    echo "Could not count from inexistent file '$1'"
     exit 1
   fi
 
@@ -63,11 +62,11 @@ Dialog_Alert()
   content=$1
   lines=$(String_GetLines $1)
 
-  [ -f $content ] && content="$(cat $content)" && lines=$(File_GetLines $conent)
+  [ -f "$content" ] && content="$(cat $content)" && lines=$(File_GetLines $1)
 
   total=$(( $lines + 10 ))
-  
-  dialog --msgbox $1 $total 80
+
+  dialog --msgbox "$content" $total 80
 }
 
 ##
