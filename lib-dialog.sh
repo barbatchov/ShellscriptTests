@@ -64,7 +64,7 @@ Dialog_Alert()
 
   [ -f "$content" ] && content="$(cat $content)" && lines=$(File_GetLines $1)
 
-  total=$(( $lines + 10 ))
+  total=$(( $lines + 5 ))
 
   dialog --msgbox "$content" $total 80
 }
@@ -223,21 +223,35 @@ Dialog_GitCloneTo()
 {
   repo=$1
   cloneTo=$2
-  title="Cloning..."
+  title="Cloning to $2..."
 
   if [[ $(echo $repo | grep ".git$" 2>/dev/null) ]] && [[ $cloneTo != "" ]]
   then
-    git clone $repo > /tmp/dialog-gitcloneto.log&
+    git clone $repo $cloneTo > /tmp/dialog-gitcloneto.log&
     cpid=$!
-    content=$(tail -f /tmp/dialog-gitcloneto.log)
+    content=/tmp/dialog-gitcloneto.log
     count_expr="0"
-    total="100"
+    
+    trap "kill $cpid" 2 15  
+    (
+      while kill -0 $cpid &>/dev/null
+      do
+        lines=$(( $(File_GetLines "$content") + 5 ))
 
-    Dialog_Gauge $cpid $title $content $count_expr $total
+        contentGiven=$(cat $content)
+
+        dialog \
+          --sleep 0.1 \
+          --infobox "$contentGiven" \
+          $lines 40
+
+        sleep 0.1
+      done
+    )
+
   else
   
     dialog --msgbox 'Nothing to clone' 8 40
     
   fi
 }
-
