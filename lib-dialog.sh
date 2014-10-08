@@ -4,7 +4,7 @@
 #  --title 'Setup' \
 #  --inputbox 'Se voce tem usuario ssh, digite: [padrao]' \
 #  0 0)
-  
+
 ##
 # File_GetSize counts the size of a file or directory
 #
@@ -14,13 +14,13 @@ File_GetSize()
 {
   if [[ -f $1 ]] || [[ -d $1 ]]
   then
-  
+
     du -c $1 | egrep total | sed 's/total//g' | egrep -o '[0-9]*'
-    
+
   else
-  
+
     echo 0
-    
+
   fi
 }
 
@@ -52,7 +52,7 @@ String_GetLines()
 
 ##
 # Dialog_Alert pops an alert with string or file contents
-# 
+#
 # @param content Can be string or file
 #
 Dialog_Alert()

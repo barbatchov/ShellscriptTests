@@ -1,0 +1,53 @@
+#!/bin/bash
+
+##
+# Opens a command for a user
+#
+# @param username
+# @param command
+XOpen_OpenFromAnotherUser()
+{
+    username=$1
+    command=$2
+    
+    echo -e "\e[32mOpenning\e[0m $command for $username"
+    
+    ! [ $username ]                      && exit 1;
+    ! [ $command ]                       && exit 1;
+    ! [ $(id -u $username 2>/dev/null) ] && exit 1;
+    
+    xhost "+SI:localuser:$username" 2>/dev/null
+    
+    su $username -c $command
+}
+
+XOpen_help()
+{
+cat <<EOF
+
+Options:
+    --open - Expects the user name and a command
+    --help - Shows this help
+
+To run this:
+    xopen --open "username" "command"
+
+Ex:
+    xopen --open "foo" "chromium-browser"
+EOF
+}
+
+##
+# run
+#
+
+case $1 in
+--help)
+    XOpen_help
+    ;;
+--open)
+    XOpen_OpenFromAnotherUser $2 $3
+    ;;
+*)
+    echo "$0 --help"
+esac
