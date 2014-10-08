@@ -19,6 +19,8 @@ XOpen_OpenFromAnotherUser()
     xhost "+SI:localuser:$username" 2>/dev/null
     
     su $username -c $command
+    
+    xhost "-SI:localuser:$username" 2>/dev/null
 }
 
 XOpen_help()
